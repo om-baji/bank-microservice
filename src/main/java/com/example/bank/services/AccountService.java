@@ -4,8 +4,6 @@ import com.example.bank.models.*;
 import com.example.bank.repository.AccountRepository;
 import com.example.bank.repository.UserRepository;
 import com.example.bank.util.Helpers;
-import jakarta.persistence.GeneratedValue;
-import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -28,7 +26,7 @@ public class AccountService {
     private Helpers helper;
 
     public List<AccountModel> fetchAccounts() {
-        List<Accounts> accounts = repository.findByUsername("");
+        List<Accounts> accounts = repository.findByUser_Username("");
 
         List<AccountModel> finalAccounts = new ArrayList<>();
 

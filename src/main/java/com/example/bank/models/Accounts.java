@@ -22,7 +22,7 @@ public class Accounts {
 
     private String accountNumber;
 
-    @OneToOne(mappedBy = "accounts", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "account", cascade = CascadeType.ALL)
     private Balances balance;
 
     private String accountType;

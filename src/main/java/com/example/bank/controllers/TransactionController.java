@@ -28,10 +28,10 @@ public class TransactionController {
     }
 
     @GetMapping("/transactions/{id}")
-    public Transactions getTransactions(@RequestParam String accountId)  {
+    public Transactions getTransactions(@RequestParam String txnId)  {
 
         try {
-            return service.getTransaction(accountId);
+            return service.getTransaction(txnId);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

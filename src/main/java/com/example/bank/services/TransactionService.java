@@ -39,8 +39,8 @@ public class TransactionService {
       return transactions;
     }
 
-    public Transactions getTransaction(String accountId) throws Exception {
-        Optional<Transactions> transaction = repository.findByAccountId(accountId);
+    public Transactions getTransaction(String txnId) throws Exception {
+        Optional<Transactions> transaction = repository.findById(txnId);
 
         if (transaction.isEmpty()) throw  new Exception("Transaction not found!");
 
