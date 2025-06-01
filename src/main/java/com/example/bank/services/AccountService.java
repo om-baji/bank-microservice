@@ -1,5 +1,6 @@
 package com.example.bank.services;
 
+import com.example.bank.config.MessageProducer;
 import com.example.bank.models.*;
 import com.example.bank.repository.AccountRepository;
 import com.example.bank.repository.UserRepository;
@@ -12,10 +13,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class AccountService {
@@ -25,6 +23,9 @@ public class AccountService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private MessageProducer producer;
 
     @Autowired
     private Helpers helper;
@@ -117,6 +118,14 @@ public class AccountService {
                 .build();
 
         accounts = repository.save(accounts);
+        Map<String,String> messageObj = new HashMap<>();
+
+        messageObj.put("eventType", "ACCOUNT_CREATED");
+        messageObj.put("account_no" , accounts.getAccountNumber().substring(0,4) + "XXXX XXXX XXXX");
+        messageObj.put("timestamp", new Date().toString());
+        messageObj.put("username" , helper.getCurrentUsername());
+
+        producer.pushMessage("banking.account.events", messageObj);
 
         return AccountModel.builder()
                 .accountType(accounts.getAccountType())

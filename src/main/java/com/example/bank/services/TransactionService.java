@@ -1,5 +1,6 @@
 package com.example.bank.services;
 
+import com.example.bank.config.MessageProducer;
 import com.example.bank.models.Accounts;
 import com.example.bank.models.TransactionDTO;
 import com.example.bank.models.Transactions;
@@ -27,6 +28,9 @@ public class TransactionService {
 
     @Autowired
     private AccountRepository accountRepository;
+
+    @Autowired
+    private MessageProducer producer;
 
     @Autowired
     private Helpers helpers;
@@ -68,6 +72,7 @@ public class TransactionService {
     public TransactionDTO createTransaction(TransactionSchema schema) {
         Transactions txn = new Transactions();
         txn.setCreatedAt(new Date());
+        Map<String,Object> objectMap = new HashMap<>();
 
         try {
             String username = helpers.getCurrentUsername();
@@ -76,8 +81,8 @@ public class TransactionService {
             Optional<Accounts> toOpt = accountRepository.findByAccountNumber(schema.getTo());
 
             if (fromOpt.isEmpty() || toOpt.isEmpty()) {
-                txn.setStatus("FAILED");
-                txn.setDescription("Account Not Found");
+                txn.setStatus("FAILED"); objectMap.put("status","FAILED");
+                txn.setDescription("Account Not Found"); objectMap.put("description","Account Not Found");
                 return helpers.toDTO(repository.save(txn));
             }
 
@@ -90,8 +95,8 @@ public class TransactionService {
             txn.setAmount(schema.getAmount());
 
             if (!fromAccount.getCurrencyCode().equals(toAccount.getCurrencyCode())) {
-                txn.setStatus("FAILED");
-                txn.setDescription("Currency mismatch between accounts");
+                txn.setStatus("FAILED"); objectMap.put("status", "FAILED");
+                txn.setDescription("Currency mismatch between accounts"); objectMap.put("description", "Currency mismatch between accounts");
                 return helpers.toDTO(repository.save(txn));
             }
 
@@ -99,8 +104,8 @@ public class TransactionService {
             long transferAmountRaw = CurrencyManager.toRawAmount(BigDecimal.valueOf(schema.getAmount()), fromAccount.getCurrencyCode());
 
             if (fromBalanceRaw < transferAmountRaw) {
-                txn.setStatus("FAILED");
-                txn.setDescription("Insufficient balance");
+                txn.setStatus("FAILED"); objectMap.put("status", "FAILED");
+                txn.setDescription("Insufficient balance"); objectMap.put("description", "Insufficient balance");
                 return helpers.toDTO(repository.save(txn));
             }
 
@@ -110,12 +115,15 @@ public class TransactionService {
             accountRepository.save(fromAccount);
             accountRepository.save(toAccount);
 
-            txn.setStatus("SUCCESS");
-            txn.setDescription("Transfer completed");
+            txn.setStatus("SUCCESS"); objectMap.put("status", "SUCCESS");
+            txn.setDescription("Transfer completed"); objectMap.put("description", "Transfer completed");
 
         } catch (Exception e) {
-            txn.setStatus("FAILED");
-            txn.setDescription("Internal error: " + e.getMessage());
+            txn.setStatus("FAILED"); objectMap.put("status", "SUCCESS");
+            txn.setDescription("Internal error: " + e.getMessage()); objectMap.put("description", "Internal error: " + e.getMessage());
+        } finally {
+            objectMap.put("eventType", "ACCOUNT_TRANSFER");
+            producer.pushMessage("banking.transaction.events", objectMap);
         }
 
         return helpers.toDTO(repository.save(txn));

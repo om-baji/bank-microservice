@@ -8,9 +8,9 @@ import org.springframework.stereotype.Component;
 public class MessageProducer {
 
     @Autowired
-    private KafkaTemplate<String,String> kafkaTemplate;
+    private KafkaTemplate<String,Object> kafkaTemplate;
 
-    public void pushMessage(String topic,String message) {
+    public void pushMessage(String topic,Object message) {
         kafkaTemplate.send(topic,message);
     }
 }
