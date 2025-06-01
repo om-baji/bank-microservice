@@ -7,27 +7,24 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.security.Key;
-import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Function;
 
 @Service
-public class JwtService {
+public class RefreshTokenService {
 
     private SecretKey key;
 
-    public JwtService(@Value("${jwt.secret}") String secret) {
+    public RefreshTokenService(@Value("${refresh.secret}") String secret) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateToken(String username) {
+
+    public String generateRefreshToken(String username) {
 
         Map<String, Object> claims = new HashMap<>();
 
@@ -37,7 +34,7 @@ public class JwtService {
                 .add(claims)
                 .subject(username)
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 30))
+                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24 * 7))
                 .and()
                 .signWith(getKey())
                 .compact();
@@ -48,7 +45,7 @@ public class JwtService {
     }
 
     public String extractUsername(String token) {
-        return extractClaims(token,Claims::getSubject);
+        return extractClaims(token, Claims::getSubject);
     }
 
     private <T> T extractClaims(String token, Function<Claims,T> claimsTFunction) {
@@ -65,7 +62,7 @@ public class JwtService {
                 .getPayload();
     }
 
-    public boolean validateToken(String token, UserDetails userDetails) {
+    public boolean validateRefreshToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
