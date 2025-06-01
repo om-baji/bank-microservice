@@ -22,8 +22,9 @@ public class Accounts {
 
     private String accountNumber;
 
-    @OneToOne(mappedBy = "account", cascade = CascadeType.ALL)
-    private Balances balance;
+    private long balanceRaw;
+
+    private String currencyCode;
 
     private String accountType;
 

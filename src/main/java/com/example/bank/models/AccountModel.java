@@ -1,9 +1,6 @@
 package com.example.bank.models;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.Date;
 
@@ -17,7 +14,7 @@ public class AccountModel {
 
     private String accountNumber;
 
-    private Double balance;
+    private double balance;
 
     private String accountType;
 

@@ -2,49 +2,83 @@ package com.example.bank.controllers;
 
 import com.example.bank.models.AccountModel;
 import com.example.bank.models.AccountRequest;
-import com.example.bank.models.Accounts;
 import com.example.bank.services.AccountService;
+import com.example.bank.util.Helpers;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
+@RequestMapping("/accounts")
 public class AccountController {
-
 
     @Autowired
     private AccountService accountService;
 
-    @GetMapping("/accounts")
-    public List<AccountModel> getAccounts() {
-        return accountService.fetchAccounts();
+    @Autowired
+    private Helpers helpers;
+
+    @GetMapping
+    public ResponseEntity<?> getAccounts() {
+        List<AccountModel> accounts = accountService.fetchAccounts();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("message", "Accounts fetched successfully");
+        response.put("data", accounts);
+
+        return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/accounts/{id}")
-    public AccountModel getAccount(@PathVariable String id) {
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getAccount(@PathVariable String id) {
         try {
-            return accountService.fetchAccount(id);
+            AccountModel account = accountService.fetchAccount(id);
+
+            Map<String,Object> response = new HashMap<>();
+            response.put("status","success");
+            response.put("message", "Account fetched successfully");
+            response.put("data",account);
+
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            return helpers.errorResponse(e);
         }
     }
 
-    @GetMapping("/accounts/{id}/balance")
-    public Double getBalance(@PathVariable String id) {
+    @GetMapping("/{id}/balance")
+    public ResponseEntity<?> getBalance(@PathVariable String id) {
         try {
-            return accountService.fetchAccountBalance(id);
+            Double balance = accountService.fetchAccountBalance(id);
+
+            Map<String,Object> response = new HashMap<>();
+            response.put("status","success");
+            response.put("message", "Balance fetched successfully!");
+            response.put("data",balance);
+
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            return helpers.errorResponse(e);
         }
     }
 
-    @PostMapping("/account")
-    public AccountModel postAccount(@RequestBody AccountRequest accountBody){
+    @PostMapping
+    public ResponseEntity<?> postAccount(@RequestBody AccountRequest accountBody) {
         try {
-            return accountService.saveAccount(accountBody);
+            AccountModel newAccount = accountService.saveAccount(accountBody);
+
+            Map<String,Object> response = new HashMap<>();
+            response.put("status","success");
+            response.put("message", "Balance fetched successfully!");
+            response.put("data",newAccount);
+
+            return ResponseEntity.status(201).body(response);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            return helpers.errorResponse(e);
         }
     }
 }

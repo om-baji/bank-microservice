@@ -1,12 +1,11 @@
 package com.example.bank.controllers;
 
+import com.example.bank.models.TransactionDTO;
 import com.example.bank.models.Transactions;
+import com.example.bank.schemas.TransactionSchema;
 import com.example.bank.services.TransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.Mapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -17,7 +16,7 @@ public class TransactionController {
     private TransactionService service;
 
     @GetMapping("/transactions")
-    public List<Transactions> getTransactions(@RequestParam(name = "id") String accountId,
+    public List<TransactionDTO> getTransactions(@RequestParam(name = "id") String accountId,
               @RequestParam Integer page, @RequestParam Integer size)  {
 
         try {
@@ -28,10 +27,18 @@ public class TransactionController {
     }
 
     @GetMapping("/transactions/{id}")
-    public Transactions getTransactions(@RequestParam String txnId)  {
-
+    public TransactionDTO getTransactions(@RequestParam String txnId) {
         try {
             return service.getTransaction(txnId);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @PostMapping("/execute")
+    public TransactionDTO postTransaction(@RequestBody TransactionSchema schema) {
+        try {
+            return service.createTransaction(schema);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

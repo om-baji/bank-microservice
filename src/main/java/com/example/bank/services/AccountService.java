@@ -3,8 +3,12 @@ package com.example.bank.services;
 import com.example.bank.models.*;
 import com.example.bank.repository.AccountRepository;
 import com.example.bank.repository.UserRepository;
+import com.example.bank.util.CurrencyManager;
 import com.example.bank.util.Helpers;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -26,19 +30,23 @@ public class AccountService {
     private Helpers helper;
 
     public List<AccountModel> fetchAccounts() {
-        List<Accounts> accounts = repository.findByUser_Username("");
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        List<Accounts> accounts = repository.findByUser_Username(username);
 
         List<AccountModel> finalAccounts = new ArrayList<>();
 
-        accounts.stream().forEach(account -> {
-            Balances balance = account.getBalance();
-            Double amount = balance.getRaw() / Math.pow(10,balance.getDecimals());
+        accounts.forEach(account -> {
+            long rawBalance = account.getBalanceRaw();
+            String currency = account.getCurrencyCode();
+            BigDecimal amount = CurrencyManager.fromRawAmount(rawBalance, currency);
             finalAccounts.add(AccountModel
                     .builder()
                     .id(account.getId())
                     .accountNumber(account.getAccountNumber())
                     .status(account.getStatus())
-                    .balance(amount)
+                    .balance(amount.doubleValue())
                     .accountType(account.getAccountType())
                     .createdAt(account.getCreatedAt())
                     .build()
@@ -49,59 +57,66 @@ public class AccountService {
     }
 
     public AccountModel fetchAccount(String id) throws Exception {
-        Optional<Accounts> exists =  repository.findById(id);
+        Optional<Accounts> exists = repository.findById(id);
 
-        if(exists.isEmpty()) throw new Exception("Account Not found!");
+        if (exists.isEmpty())
+            throw new Exception("Account Not found!");
 
         Accounts account = exists.get();
-        Balances balance = account.getBalance();
 
-        Double amount = balance.getRaw() / Math.pow(10,balance.getDecimals());
+        long rawBalance = account.getBalanceRaw();
+        String currency = account.getCurrencyCode();
+        BigDecimal amount = CurrencyManager.fromRawAmount(rawBalance, currency);
 
         return AccountModel
                 .builder()
                 .accountNumber(account.getAccountNumber())
                 .accountType(account.getAccountType())
                 .status(account.getStatus())
-                .balance(amount)
+                .balance(amount.doubleValue())
                 .createdAt(account.getCreatedAt())
                 .id(account.getId())
                 .build();
     }
 
     public Double fetchAccountBalance(String id) throws Exception {
-        Optional<Accounts> exists =  repository.findById(id);
+        Optional<Accounts> exists = repository.findById(id);
 
-        if(exists.isEmpty()) throw new Exception("Account Not found!");
+        if (exists.isEmpty()) throw new Exception("Account Not found!");
 
         Accounts account = exists.get();
-        Balances balance = account.getBalance();
+        long rawBalance = account.getBalanceRaw();
+        String currency = account.getCurrencyCode();
 
-        return balance.getRaw() / Math.pow(10,balance.getDecimals());
+        BigDecimal amount = CurrencyManager.fromRawAmount(rawBalance, currency);
+        return amount.doubleValue();
     }
 
+    @Transactional
     public AccountModel saveAccount(AccountRequest accountBody) throws Exception {
         Optional<Users> exists = userRepository.findByUsername(accountBody.getUsername());
 
-        if(exists.isEmpty()) throw new Exception("User Not found!");
+        if (exists.isEmpty()) throw new Exception("User Not found!");
 
         Users user = exists.get();
 
-        Accounts accounts = Accounts
-                .builder()
+        String currencyCode = accountBody.getCurrencyCode();
+
+        CurrencyManager.getDecimals(currencyCode);
+
+        long rawDeposit = CurrencyManager.toRawAmount(BigDecimal.valueOf(accountBody.getDeposit()), currencyCode);
+
+        Accounts accounts = Accounts.builder()
                 .user(user)
                 .accountType(accountBody.getAccountType())
                 .accountNumber(helper.generateUniqueAccountNumber())
-                .status("OPERATIONAL")
+                .status(accountBody.getStatus())
+                .currencyCode(currencyCode)
+                .balanceRaw(rawDeposit)
                 .createdAt(new Date())
-                .balance(Balances.builder()
-                        .raw(accountBody.getDeposit().longValue())
-                        .decimals(new BigDecimal(accountBody.getDeposit()).stripTrailingZeros().scale())
-                        .build()
-                )
-                .sentTransactions(List.of())
-                .receivedTransactions(List.of())
                 .build();
+
+        accounts = repository.save(accounts);
 
         return AccountModel.builder()
                 .accountType(accounts.getAccountType())

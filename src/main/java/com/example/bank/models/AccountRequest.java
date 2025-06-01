@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.java.Log;
 
 import java.nio.DoubleBuffer;
 
@@ -18,5 +19,7 @@ public class AccountRequest {
 
     private String status;
 
-    private Double deposit;
+    private Long deposit;
+
+    private String currencyCode;
 }
