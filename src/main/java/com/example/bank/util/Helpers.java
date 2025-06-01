@@ -5,6 +5,8 @@ import com.example.bank.models.Transactions;
 import com.example.bank.repository.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -109,6 +111,10 @@ public class Helpers {
                 .build();
     }
 
+    public String getCurrentUsername() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
+        return authentication.getName();
+    }
 
 }

@@ -6,10 +6,12 @@ import com.example.bank.models.Transactions;
 import com.example.bank.repository.AccountRepository;
 import com.example.bank.repository.TransactionRepository;
 import com.example.bank.schemas.TransactionSchema;
+import com.example.bank.schemas.UserTransactionSchema;
 import com.example.bank.util.AmountParams;
 import com.example.bank.util.CurrencyManager;
 import com.example.bank.util.Helpers;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
@@ -68,7 +70,9 @@ public class TransactionService {
         txn.setCreatedAt(new Date());
 
         try {
-            Optional<Accounts> fromOpt = accountRepository.findByAccountNumber(schema.getFrom());
+            String username = helpers.getCurrentUsername();
+
+            Optional<Accounts> fromOpt = accountRepository.findByAccountNumberAndUser_Username(schema.getFrom(), username);
             Optional<Accounts> toOpt = accountRepository.findByAccountNumber(schema.getTo());
 
             if (fromOpt.isEmpty() || toOpt.isEmpty()) {
@@ -116,4 +120,40 @@ public class TransactionService {
 
         return helpers.toDTO(repository.save(txn));
     }
+
+    public List<TransactionDTO> getTransactionByAccount(String id) throws Exception {
+
+        Optional<Accounts> exists = accountRepository.findByAccountNumber(id);
+
+        if(exists.isEmpty())
+            throw new Exception("Account Not found!");
+
+        Accounts account = exists.get();
+
+        List<Transactions> transactions = repository.findByFromAccount_IdOrToAccount_Id(account.getId(),account.getId());
+
+        List<TransactionDTO> list = new ArrayList<>();
+
+        transactions.forEach(txn -> list.add(helpers.toDTO(txn)));
+
+        return list;
+    }
+
+//    public TransactionDTO createUserTxn(UserTransactionSchema schema) {
+//
+//        TransactionDTO txn = TransactionDTO.builder()
+//                .createdAt(new Date())
+//                .status("PENDING")
+//                .currency(null)
+//                .amount(schema.getAmount())
+//                .fromAccountNumber(schema.getAccountNumber())
+//                .fromUser(schema.getFrom())
+//                .toUser(schema.getTo())
+//                .build();
+//
+//        try {
+//            Optional<Accounts> fromOpt = accountRepository.findByAccountNumber(schema.getAccountNumber());
+//
+//        }
+//    }
 }
