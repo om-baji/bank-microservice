@@ -130,6 +130,7 @@ public class TransactionService {
         } finally {
             objectMap.put("eventType", "ACCOUNT_TRANSFER");
             producer.pushMessage("banking.transaction.events", objectMap);
+            producer.pushMessage("bank.email.service", objectMap);
         }
 
         return helpers.toDTO(repository.save(txn));
