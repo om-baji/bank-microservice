@@ -11,6 +11,10 @@ public class MessageProducer {
     private KafkaTemplate<String,Object> kafkaTemplate;
 
     public void pushMessage(String topic,Object message) {
-        kafkaTemplate.send(topic,message);
+        try {
+            kafkaTemplate.send(topic,message);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

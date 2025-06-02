@@ -118,6 +118,12 @@ public class TransactionService {
             txn.setStatus("SUCCESS"); objectMap.put("status", "SUCCESS");
             txn.setDescription("Transfer completed"); objectMap.put("description", "Transfer completed");
 
+            objectMap.put("amount" , schema.getAmount());
+            objectMap.put("fromAccount", fromAccount.getAccountNumber());
+            objectMap.put("toAccount", toAccount.getAccountNumber());
+            objectMap.put("username", helpers.getCurrentUsername());
+            objectMap.put("transactionId", txn.getId());
+
         } catch (Exception e) {
             txn.setStatus("FAILED"); objectMap.put("status", "SUCCESS");
             txn.setDescription("Internal error: " + e.getMessage()); objectMap.put("description", "Internal error: " + e.getMessage());
